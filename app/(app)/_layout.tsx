@@ -18,6 +18,7 @@ export default function AppLayout() {
       <Tabs.Screen name="plans" options={{ title: 'Plans' }} />
       <Tabs.Screen name="session" options={{ title: 'Train' }} />
       <Tabs.Screen name="progress" options={{ title: 'Progress' }} />
+      <Tabs.Screen name="coach" options={{ title: 'Coach' }} />
       <Tabs.Screen name="checkin" options={{ href: null }} />
     </Tabs>
   )

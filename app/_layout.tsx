@@ -6,21 +6,20 @@ import { colors } from '../src/constants/colors'
 
 export default function RootLayout() {
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        router.replace('/(app)/home')
-      } else {
-        router.replace('/(auth)/login')
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('AUTH EVENT:', event, !!session)
+      if (event === 'INITIAL_SESSION') {
+        if (session) {
+          router.replace('/(app)/home')
+        } else {
+          router.replace('/(auth)/login')
+        }
       }
+      if (event === 'SIGNED_IN') router.replace('/(app)/home')
+      if (event === 'SIGNED_OUT') router.replace('/(auth)/login')
     })
 
-    supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        router.replace('/(app)/home')
-      } else {
-        router.replace('/(auth)/login')
-      }
-    })
+    return () => subscription.unsubscribe()
   }, [])
 
   return (
