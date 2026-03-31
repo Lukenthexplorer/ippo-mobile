@@ -15,8 +15,10 @@ export default function AppLayout() {
       tabBarLabelStyle: { fontSize: 11, fontWeight: '500' },
     }}>
       <Tabs.Screen name="home" options={{ title: 'Today' }} />
+      <Tabs.Screen name="plans" options={{ title: 'Plans' }} />
       <Tabs.Screen name="session" options={{ title: 'Train' }} />
       <Tabs.Screen name="progress" options={{ title: 'Progress' }} />
+      <Tabs.Screen name="checkin" options={{ href: null }} />
     </Tabs>
   )
 }
