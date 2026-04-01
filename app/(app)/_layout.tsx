@@ -1,17 +1,21 @@
 import { Tabs } from 'expo-router'
-import { colors } from '../../src/constants/colors'
+import { Platform } from 'react-native'
+
+const isWeb = Platform.OS === 'web'
 
 export default function AppLayout() {
   return (
     <Tabs screenOptions={{
       headerShown: false,
-      tabBarStyle: {
-        backgroundColor: colors.surface,
-        borderTopColor: colors.border,
-        borderTopWidth: 1,
-      },
-      tabBarActiveTintColor: colors.text,
-      tabBarInactiveTintColor: colors.textTertiary,
+      tabBarStyle: isWeb
+        ? { display: 'none' } as any
+        : {
+            backgroundColor: '#111111',
+            borderTopColor: '#1E1E1E',
+            borderTopWidth: 1,
+          },
+      tabBarActiveTintColor: '#F0F0F0',
+      tabBarInactiveTintColor: '#555555',
       tabBarLabelStyle: { fontSize: 11, fontWeight: '500' },
     }}>
       <Tabs.Screen name="home" options={{ title: 'Today' }} />
