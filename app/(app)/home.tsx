@@ -1,21 +1,18 @@
 import { useState, useCallback } from 'react'
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, ActivityIndicator, Platform
+  ScrollView, ActivityIndicator
 } from 'react-native'
 import { router, useFocusEffect } from 'expo-router'
 import { supabase } from '../../src/lib/supabase'
 import { api } from '../../src/lib/api'
+import { useLayout } from '../../src/hooks/useLayout'
 
 const C = {
   bg: '#080808', surface: '#111111', surface2: '#161616',
-  border: '#1E1E1E', border2: '#2A2A2A',
-  text: '#F0F0F0', muted: '#555555', sub: '#888888',
-  red: '#E8192C', redDim: '#3D0A0F',
-  green: '#22C55E', amber: '#F59E0B',
+  border: '#1E1E1E', text: '#F0F0F0', muted: '#555555', sub: '#888888',
+  red: '#E8192C', green: '#22C55E', amber: '#F59E0B',
 }
-
-const isWeb = Platform.OS === 'web'
 
 type CheckIn = { readiness_score: number; sleep_quality: number; energy_level: number; muscle_soreness: number }
 type Overview = { total_sessions: number; sessions_this_week: number; exercises: { exercise_name: string; last_weight: number; trend: string }[] }
@@ -38,6 +35,7 @@ function trendColor(t: string) { return t === 'up' ? C.green : t === 'down' ? C.
 function trendSymbol(t: string) { return t === 'up' ? '↑' : t === 'down' ? '↓' : '→' }
 
 export default function Home() {
+  const { isDesktop } = useLayout()
   const [checkin, setCheckin] = useState<CheckIn | null>(null)
   const [overview, setOverview] = useState<Overview | null>(null)
   const [loading, setLoading] = useState(true)
@@ -64,17 +62,22 @@ export default function Home() {
     <View style={s.loader}><ActivityIndicator color={C.red} /></View>
   )
 
+  const ACTIONS = [
+    { label: 'Start session', sub: 'Log your training', route: '/(app)/session', red: true },
+    { label: 'Check in', sub: 'Log readiness', route: '/(app)/checkin', red: false },
+    { label: 'Plans', sub: 'Manage workouts', route: '/(app)/plans', red: false },
+    { label: 'Coach', sub: 'Talk to IPPO', route: '/(app)/coach', red: false },
+  ]
+
   return (
     <ScrollView style={s.root} contentContainerStyle={s.content}>
-
-      {/* Header */}
       <View style={s.header}>
         <View>
           <Text style={s.logo}>IPPO</Text>
           <Text style={s.greeting}>{greeting()}</Text>
           <Text style={s.email}>{email}</Text>
         </View>
-        {isWeb && (
+        {isDesktop ? (
           <View style={s.navLinks}>
             {[
               { label: 'Today', route: '/(app)/home' },
@@ -91,19 +94,16 @@ export default function Home() {
               <Text style={s.signoutText}>Sign out</Text>
             </TouchableOpacity>
           </View>
-        )}
-        {!isWeb && (
+        ) : (
           <TouchableOpacity onPress={() => supabase.auth.signOut()}>
             <Text style={s.signoutText}>Sign out</Text>
           </TouchableOpacity>
         )}
       </View>
 
-      {/* Grid */}
-      <View style={[s.grid, isWeb && s.gridWeb]}>
-
+      <View style={[s.grid, isDesktop && s.gridWeb]}>
         {/* Readiness */}
-        <View style={[s.card, isWeb && s.cardFlex]}>
+        <View style={[s.card, isDesktop && s.cardFlex]}>
           <Text style={s.cardLabel}>READINESS</Text>
           {checkin ? (
             <>
@@ -140,7 +140,7 @@ export default function Home() {
         </View>
 
         {/* This week */}
-        <View style={[s.card, isWeb && s.cardFlex]}>
+        <View style={[s.card, isDesktop && s.cardFlex]}>
           <Text style={s.cardLabel}>THIS WEEK</Text>
           <Text style={s.bigNum}>
             {overview?.sessions_this_week ?? 0}
@@ -172,21 +172,23 @@ export default function Home() {
         {/* Quick actions */}
         <View style={[s.card, s.cardFull]}>
           <Text style={s.cardLabel}>QUICK ACTIONS</Text>
-          <View style={[s.actionsGrid, isWeb && s.actionsGridWeb]}>
-            {[
-              { label: 'Start session', sub: 'Log your training', route: '/(app)/session', red: true },
-              { label: 'Check in', sub: 'Log readiness', route: '/(app)/checkin', red: false },
-              { label: 'Plans', sub: 'Manage workouts', route: '/(app)/plans', red: false },
-              { label: 'Coach', sub: 'Talk to IPPO', route: '/(app)/coach', red: false },
-            ].map((a, i) => (
-              <TouchableOpacity key={i} style={[s.actionCard, a.red && s.actionCardRed]} onPress={() => router.push(a.route as any)}>
+          <View style={[s.actionsGrid, isDesktop && s.actionsGridWeb]}>
+            {ACTIONS.map((a, i) => (
+              <TouchableOpacity
+                key={i}
+                style={[
+                  s.actionCard,
+                  a.red && s.actionCardRed,
+                  { minWidth: isDesktop ? 160 : '100%' as any }
+                ]}
+                onPress={() => router.push(a.route as any)}
+              >
                 <Text style={[s.actionTitle, a.red && s.actionTitleRed]}>{a.label}</Text>
                 <Text style={[s.actionSub, a.red && s.actionSubRed]}>{a.sub}</Text>
               </TouchableOpacity>
             ))}
           </View>
         </View>
-
       </View>
     </ScrollView>
   )
@@ -195,10 +197,10 @@ export default function Home() {
 const s = StyleSheet.create({
   loader: { flex: 1, backgroundColor: C.bg, justifyContent: 'center', alignItems: 'center' },
   root: { flex: 1, backgroundColor: C.bg },
-  content: { padding: isWeb ? 40 : 24, paddingTop: isWeb ? 32 : 64, paddingBottom: 60 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 40, borderBottomWidth: 1, borderBottomColor: C.border, paddingBottom: 24 },
+  content: { padding: 24, paddingTop: 32, paddingBottom: 60 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 32, borderBottomWidth: 1, borderBottomColor: C.border, paddingBottom: 24 },
   logo: { fontSize: 11, fontWeight: '700', color: C.red, letterSpacing: 4, marginBottom: 8 },
-  greeting: { fontSize: isWeb ? 28 : 22, fontWeight: '700', color: C.text, marginBottom: 2 },
+  greeting: { fontSize: 24, fontWeight: '700', color: C.text, marginBottom: 2 },
   email: { fontSize: 12, color: C.muted },
   navLinks: { flexDirection: 'row', alignItems: 'center', gap: 28 },
   navLink: { fontSize: 13, color: C.sub },
@@ -206,7 +208,7 @@ const s = StyleSheet.create({
   signoutText: { fontSize: 13, color: C.muted },
   grid: { gap: 12 },
   gridWeb: { flexDirection: 'row', flexWrap: 'wrap' },
-  card: { backgroundColor: C.surface, borderRadius: 16, padding: 24, borderWidth: 1, borderColor: C.border, marginBottom: 0 },
+  card: { backgroundColor: C.surface, borderRadius: 16, padding: 24, borderWidth: 1, borderColor: C.border, marginBottom: 12 },
   cardFlex: { flex: 1, minWidth: 280 },
   cardFull: { width: '100%' },
   cardLabel: { fontSize: 10, fontWeight: '700', color: C.muted, letterSpacing: 2, marginBottom: 16 },
@@ -230,7 +232,7 @@ const s = StyleSheet.create({
   exTrend: { fontSize: 18, fontWeight: '700' },
   actionsGrid: { gap: 10 },
   actionsGridWeb: { flexDirection: 'row', flexWrap: 'wrap' },
-  actionCard: { flex: 1, minWidth: isWeb ? 160 : '100%' as any, backgroundColor: C.surface2, borderRadius: 12, padding: 16, borderWidth: 1, borderColor: C.border },
+  actionCard: { flex: 1, backgroundColor: C.surface2, borderRadius: 12, padding: 16, borderWidth: 1, borderColor: C.border },
   actionCardRed: { backgroundColor: C.red, borderColor: C.red },
   actionTitle: { fontSize: 15, fontWeight: '700', color: C.text, marginBottom: 4 },
   actionTitleRed: { color: '#fff' },
